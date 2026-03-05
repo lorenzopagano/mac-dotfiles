@@ -1,0 +1,134 @@
+#!/usr/bin/env sh
+
+# tmux-pair
+# Avvia una sessione tmux condivisa ed espone la macchina locale tramite un tunnel ngrok.
+# Ngrok crea un endpoint pubblico che inoltra le connessioni SSH verso il tuo localhost,
+# permettendo ad altri di collegarsi alla tua sessione per pair programming.
+
+set -eu
+
+cmd="$(basename "$0")"
+
+need() {
+  command -v "$1" >/dev/null 2>&1 || {
+    echo "Missing dependency: $1"
+    exit 1
+  }
+}
+
+help() {
+  cat <<EOF
+Usage: $cmd <subcommand>
+
+Subcommands:
+  up        Start pairing tmux session + ngrok tcp tunnel for SSH (port 22)
+  ssh       Print (and copy) the SSH command for the current ngrok tunnel
+  stop      Stop ngrok and kill tmux pairing session
+  help      Show this help
+EOF
+}
+
+ensure_deps() {
+  need tmux
+  need ngrok
+  need pbcopy
+  need jq
+}
+
+ngrok_api() {
+  # ngrok local API (default)
+  echo "http://127.0.0.1:4040/api/tunnels"
+}
+
+start_ngrok() {
+  # Start ngrok tcp tunnel for local SSH (22)
+  # Runs in background; logs to /tmp
+  ngrok tcp 22 --log=stdout >/tmp/ngrok-tmux-pair.log 2>&1 &
+  echo $! > /tmp/ngrok-tmux-pair.pid
+}
+
+wait_tunnel() {
+  # Wait until ngrok publishes a tcp URL
+  i=0
+  while [ $i -lt 50 ]; do
+    if curl -fsS "$(ngrok_api)" >/dev/null 2>&1; then
+      url="$(curl -fsS "$(ngrok_api)" | jq -r '.tunnels[] | select(.proto=="tcp") | .public_url' | head -n1 || true)"
+      if [ -n "${url:-}" ] && [ "$url" != "null" ]; then
+        echo "$url"
+        return 0
+      fi
+    fi
+    i=$((i+1))
+    sleep 0.2
+  done
+  echo "Failed to get ngrok tunnel URL. Check /tmp/ngrok-tmux-pair.log"
+  exit 1
+}
+
+ssh_cmd() {
+  url="$(wait_tunnel)"
+  # url looks like tcp://0.tcp.ngrok.io:12345
+  hostport="${url#tcp://}"
+  echo "ssh $USER@$hostport"
+}
+
+up() {
+  ensure_deps
+
+  # Create tmux session if missing
+  if ! tmux has-session -t pairing 2>/dev/null; then
+    tmux new-session -d -s pairing
+  fi
+
+  # Start ngrok if not running
+  if [ -f /tmp/ngrok-tmux-pair.pid ] && kill -0 "$(cat /tmp/ngrok-tmux-pair.pid)" 2>/dev/null; then
+    :
+  else
+    start_ngrok
+  fi
+
+  # Create panes
+  tmux rename-window -t pairing:0 "pairing"
+  tmux send-keys -t pairing:0.0 "tail -f /tmp/ngrok-tmux-pair.log" C-m
+
+  if [ "$(tmux list-panes -t pairing:0 | wc -l | tr -d ' ')" -lt 2 ]; then
+    tmux split-window -t pairing:0 -v
+  fi
+
+  # Show ssh command and copy to clipboard
+  cmdline="$(ssh_cmd)"
+  echo "$cmdline" | pbcopy
+  tmux send-keys -t pairing:0.1 "echo '$cmdline' && echo '(copied to clipboard)'" C-m
+
+  tmux select-pane -t pairing:0.1
+  tmux attach -t pairing
+}
+
+ssh() {
+  ensure_deps
+  cmdline="$(ssh_cmd)"
+  echo "$cmdline"
+  echo "$cmdline" | pbcopy
+}
+
+stop() {
+  # Stop ngrok
+  if [ -f /tmp/ngrok-tmux-pair.pid ]; then
+    pid="$(cat /tmp/ngrok-tmux-pair.pid)"
+    kill "$pid" 2>/dev/null || true
+    rm -f /tmp/ngrok-tmux-pair.pid
+  fi
+  # Kill tmux session
+  tmux kill-session -t pairing 2>/dev/null || true
+  echo "Stopped."
+}
+
+sub="${1:-help}"
+shift || true
+case "$sub" in
+  up) up "$@" ;;
+  ssh) ssh "$@" ;;
+  stop) stop "$@" ;;
+  help|-h|--help) help ;;
+  *) echo "Unknown subcommand: $sub"; help; exit 1 ;;
+esac

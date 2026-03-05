@@ -1,0 +1,34 @@
+# macOS & Rails
+*.sw[nop]
+.DS_Store
+log/*.log
+tmp/**/*
+!tmp/cache/.keep
+
+# editor
+*.swp
+*.swo
+*.swn
+*~
+
+# vim
+Session.vim
+.netrwhist
+
+# logs
+*.log
+
+# temporary
+tmp/
+.cache/
+
+# node
+npm-debug.log*
+
+# python
+__pycache__/
+*.pyc
+
+# misc
+.env
+.env.local

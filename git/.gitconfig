@@ -1,0 +1,77 @@
+[user]
+  name = Lorenzo Pagano
+  email = lorenzo.pagano@gmail.com
+
+[core]
+  editor = vim
+  excludesfile = ~/.gitignore_global
+
+[commit]
+  template = ~/.git-commit-template
+
+[color]
+  ui = true
+  [color "status"]
+    added = green
+    changed = yellow
+    untracked = red
+  [color "branch"]
+    current = green
+    local = yellow
+    remote = red
+
+[fetch]
+  prune = true
+
+[pull]
+  rebase = true
+
+[push]
+  default = simple
+  autoSetupRemote = true
+
+[merge]
+  ff = only
+
+[rerere]
+  enabled = true
+
+[log]
+  date = relative
+
+[diff]
+  colorMoved = default
+
+[branch]
+  sort = -committerdate
+
+[alias]
+
+  # base
+  s = status
+  a = add
+  b = branch
+  co = checkout
+  c = commit -m
+  d = diff
+  dc = diff --cached
+  p = push
+  pr = pull --rebase
+  fetch = fetch --all
+
+  # log
+  lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+  graph = log --graph --decorate --oneline --all
+  ld = log -p
+
+  # utility
+  last = log -1 HEAD
+  amend = commit --amend --no-edit
+  unstage = reset HEAD --
+
+  # search
+  g = !sh -c 'git grep "$1"' -
+
+  # work reports
+  today = !git log --since=midnight --author=\"$(git config user.name)\" --oneline
+  report = !git log --author=\"$(git config user.name)\" --until='now' --format='%Cgreen%ci%Creset %s%Creset' --no-merges

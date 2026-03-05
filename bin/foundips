@@ -1,0 +1,3 @@
+#!/bin/sh
+echo "Searching for range: $1/24 "
+nmap -v -sn -n $1/24 -oG - | awk '/Status: Down/{print $2}'
