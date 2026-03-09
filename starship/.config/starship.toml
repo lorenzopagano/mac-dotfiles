@@ -1,4 +1,19 @@
-add_newline = false
+format = "$hostname:$directory$git_branch$git_status $character"
+
+[hostname]
+ssh_only = false
+format = "$hostname"
+
+[directory]
+format = "[$path]($style)"
+
+[character]
+success_symbol = "[❯](green)"
+error_symbol = "[❯](red)"
 
 [git_branch]
-symbol = "🌱 "
+symbol = " "
+format = " [$symbol$branch]($style)"
+
+[git_status]
+format = "([$all_status$ahead_behind]($style))"

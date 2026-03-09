@@ -4,8 +4,9 @@
 
 brew 'zsh'       # shell avanzata
 brew 'starship'  # prompt shell moderno velocissimo
+brew "eza"
 brew 'tmux'      # terminal multiplexer per sessioni persistenti
-brew 'ngrok'
+cask 'ngrok'
 brew 'fzf'       # fuzzy finder universale
 brew 'zoxide'    # cd intelligente tra directory
 brew 'eza'       # alternativa moderna a ls
@@ -21,6 +22,12 @@ brew 'duf'       # alternativa moderna a df
 brew 'dust'      # alternativa moderna a du
 
 ########################################
+# FONTS
+########################################
+
+cask 'font-jetbrains-mono-nerd-font
+'
+########################################
 # UTILITY CLI MODERNE
 ########################################
 
@@ -34,6 +41,7 @@ brew 'jq'        # parser JSON CLI
 brew 'xh'        # client HTTP moderno
 brew 'httpie'    # client HTTP user-friendly
 brew 'curl'      # client HTTP classico
+brew 'htop'      # monitoring resources and processes
 
 ########################################
 # GIT E VERSIONAMENTO

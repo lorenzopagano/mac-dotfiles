@@ -7,3 +7,7 @@ alias :c='clear'
 alias :q='exit'
 alias grep='grep --color=auto'
 alias mkdir='mkdir -p'
+# Use neovim if installed
+if command -v nvim >/dev/null 2>&1; then
+  alias vim='nvim'
+fi
