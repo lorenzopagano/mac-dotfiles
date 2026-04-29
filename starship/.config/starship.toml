@@ -1,8 +1,10 @@
-format = "$hostname:$directory$git_branch$git_status $character"
+add_newline = false
+
+format = "$hostname$directory$git_branch$git_status $character"
 
 [hostname]
 ssh_only = false
-format = "$hostname"
+format = "$hostname:"
 
 [directory]
 format = "[$path]($style)"
