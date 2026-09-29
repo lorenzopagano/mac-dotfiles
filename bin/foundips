@@ -1,3 +1,20 @@
-#!/bin/sh
-echo "Searching for range: $1/24 "
-nmap -v -sn -n $1/24 -oG - | awk '/Status: Down/{print $2}'
+#!/bin/bash
+
+read -p "Su quale VLAN: " ip
+read -p "Barra: " mask
+
+network=$(echo "$ip" | awk -F. '{print $1"."$2"."$3".0"}')
+base=$(echo "$network" | awk -F. '{print $1"."$2"."$3}')
+
+echo "Cerco IP liberi in $network/$mask ..."
+
+nmap -sn -n "$network/$mask" -oG - \
+| awk '/Up$/{print $2}' \
+| sort -u > /tmp/active_ips.txt
+
+for i in $(seq 1 254); do
+  host="$base.$i"
+  if ! grep -qx "$host" /tmp/active_ips.txt; then
+    echo "$host"
+  fi
+done
